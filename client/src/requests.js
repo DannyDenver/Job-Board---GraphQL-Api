@@ -11,8 +11,9 @@ const authLink = new ApolloLink((operation, forward) => {
       }
     })
   }
-  return forward(operation)
-})
+
+  return forward(operation);
+});
 
 const client = new ApolloClient({
   link: ApolloLink.from([
@@ -34,32 +35,35 @@ const jobDetailFragment = gql`
   }
 `;
 
-const jobQuery = gql`query JobQuery($id:ID!) {
-  job(id: $id) {
-    ...JobDetail
+const createJobMutation = gql`
+  mutation CreateJob($input: CreateJobInput) {
+    job: createJob(input: $input) {
+      ...JobDetail
+    }
   }
-}
-${jobDetailFragment}`;
+  ${jobDetailFragment}`
+  ;
 
-const createJobMutation = gql`mutation CreateJob($input: CreateJobInput) {
-  job: createJob(input:$input) {
-     ...JobDetail
-   }
- }
-  ${jobDetailFragment}
- `;
-
-const companyQuery = gql`query CompanyQuery($id: ID!) {
-  company(id: $id) {
-    id
-    title
-    company{
+  const companyQuery = gql`query CompanyQuery($id: ID!) {
+    company(id: $id) {
       id
-      name
+      title
+      company{
+        id
+        name
+      }
+      description
+      }
+  }`;
+
+const jobQuery = gql`
+  query JobQuery($id:ID!) {
+    job(id: $id) {
+      ...JobDetail
     }
-    description
-    }
-}`;
+  }
+${jobDetailFragment}
+`;
 
 const loadJobQuery = gql`
   query JobsQuery{
@@ -90,17 +94,16 @@ export async function createJob(input) {
 }
 
 export async function loadCompany(id) {
-  const { data: { company } } = await client.query({ companyQuery, variables: { id } });
+  const { data: { company } } = await client.query({ query: companyQuery, variables: { id } });
   return company;
 }
 
 export async function loadJob(id) {
-  const { data: { job } } = await client.query({ jobQuery, variables: { id } });
+  const { data: { job } } = await client.query({ query: jobQuery, variables: { id } });
   return job;
 }
 
 export async function loadJobs() {
-  const { data: { jobs } } = await client.query({ loadJobQuery, fetchPolicy: "no-cache" });
+  const { data: { jobs } } = await client.query({ query: loadJobQuery, fetchPolicy: "no-cache" });
   return jobs;
 }
-
